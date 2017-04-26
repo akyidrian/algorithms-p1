@@ -1,4 +1,3 @@
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -9,23 +8,32 @@ import java.util.NoSuchElementException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test client for Deque class. Does basic checking for correctness and proper usage of exceptions.
+ */
 class DequeTest {
     private Deque deque;
-    private String seq = "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z";
-    private String[] seqItems;
+    private String seq = "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z";  // input sequence of items.
+    private String[] seqItems;  // items array where each element represent a character or word from "seq".
 
     @BeforeEach
-    void setUpDeque() {
+    void setUp() {
         deque = new Deque<String>();
-        seqItems = seq.trim().split("\\s+");
+        seqItems = seq.trim().split("\\s+");  // whitespace acts to divide items from seq string
     }
 
+    /**
+     * In the beginning, deque should be empty.
+     */
     @Test
     void emptyOnInit() {
         assertTrue(deque.isEmpty());
         assertEquals(0, deque.size());
     }
 
+    /**
+     * Fill from start and empty from end. Acts like a queue.
+     */
     @Test
     void addFirstRemoveLastQueue() {
         for (int i = 0; i < seqItems.length; i++) {
@@ -42,6 +50,9 @@ class DequeTest {
         }
     }
 
+    /**
+     * Fill from end and empty from start. Acts like a queue.
+     */
     @Test
     void addLastRemoveFirstQueue() {
         for (int i = 0; i < seqItems.length; i++) {
@@ -58,6 +69,9 @@ class DequeTest {
         }
     }
 
+    /**
+     * Fill from start and empty from start. Acts like a stack.
+     */
     @Test
     void addRemoveFirstStack() {
         for (int i = 0; i < seqItems.length; i++) {
@@ -76,6 +90,9 @@ class DequeTest {
         }
     }
 
+    /**
+     * Fill from end and empty from end. Acts like a stack.
+     */
     @Test
     void addRemoveLastStack() {
         for (int i = 0; i < seqItems.length; i++) {
@@ -94,6 +111,9 @@ class DequeTest {
         }
     }
 
+    /**
+     * Ensure we can't add a null item.
+     */
     @Test
     void addingNullItemException() {
         try {
@@ -111,6 +131,9 @@ class DequeTest {
         }
     }
 
+    /**
+     * Ensure we can't try to remove items from empty deque.
+     */
     @Test
     void removingItemFromEmptyDequeException() {
         try {
@@ -128,6 +151,9 @@ class DequeTest {
         }
     }
 
+    /**
+     * Ensure we can't use the remove() iterator method.
+     */
     @Test
     void iteratorRemoveCallException() {
         Iterator<String> i = deque.iterator();
@@ -139,6 +165,9 @@ class DequeTest {
         }
     }
 
+    /**
+     * Ensure we can't iterate (using the iterator) through an empty deque.
+     */
     @Test
     void iteratorNoNextInEmptyDequeException() {
         Iterator<String> i = deque.iterator();
@@ -151,6 +180,12 @@ class DequeTest {
         }
     }
 
+    /**
+     * Ensures iterator cannot be used when deque is modified.
+     *
+     * Currently disabled. Reasonable amount of work necessary in Deque to check for modification while using an
+     * iterator.
+     */
     @Disabled
     @Test
     void iteratorDequeModifiedException() {
@@ -169,6 +204,9 @@ class DequeTest {
         }
     }
 
+    /**
+     * Ensure iterator iterates from the front to the end of the deque.
+     */
     @Test
     void iteratorWorksFrontToEnd() {
         for (String item: seqItems) {

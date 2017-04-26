@@ -4,7 +4,10 @@ import edu.princeton.cs.algs4.StdOut;
 import static java.lang.System.exit;
 
 /**
- * Created by Aydin on 21/04/2017.
+ * Client that uses RandomizedQueue to print out a permutation of length k using a standard input String containing n
+ * items. Note that the argument k must satisfy 0<=k<=n
+ *
+ * @author Aydin
  */
 public class Permutation {
     public static void main(String[] args) {
@@ -17,13 +20,12 @@ public class Permutation {
 
         RandomizedQueue<String> randQueue = new RandomizedQueue<String>();
         String[] inputStrItems = StdIn.readAllStrings();
-
         int k;
         int n;
         n = inputStrItems.length;
         try {
-            k = Integer.parseInt(args[0]);
-            if ((k < 0) || (k > n)) {
+            k = Integer.parseInt(args[0]);  // Must be in try block in case args[0] is not a passable integer.
+            if ((k < 0) || (k > n)) {  // Not 0<=k<=n?
                 throw new IllegalArgumentException();
             }
         }
@@ -33,10 +35,12 @@ public class Permutation {
             );
         }
 
+        // Fill randomized queue with all items.
         for (String item: inputStrItems) {
             randQueue.enqueue(item);
         }
 
+        // Empty out all items and print.
         for (int i = 0; i < k; i++) {
             StdOut.println(randQueue.dequeue());
         }
