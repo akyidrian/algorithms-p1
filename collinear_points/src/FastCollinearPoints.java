@@ -22,46 +22,31 @@ public class FastCollinearPoints {
         ArrayList<LineSegment> tempLineSegments = new ArrayList<>();
         Point[] pointsCopy = points.clone();
         Point[] others = pointsCopy.clone();
-
         for (Point origin: pointsCopy) {
             Arrays.sort(others);
             Arrays.sort(others, origin.slopeOrder());  // Lowest element in other is the origin point/degenerate point.
 
             int start = 1;
-            int end = others.length - 1;
-            int i = start;
-            while (i <= end) {
-                Comparator<Point> slopeOrder = origin.slopeOrder();
-                boolean sameSlopes = (slopeOrder.compare(others[i - 1], others[i]) == 0);
-                boolean lineSegment = ((i - start) >= 3) && (origin.compareTo(others[start]) < 0);
-                if (sameSlopes) {
-                    if ((i == end) && ((i - start) >= 2) && (origin.compareTo(others[start]) < 0)) { // 2 because we don't get the next iteration.
-                        tempLineSegments.add(new LineSegment(origin, others[end]));
+            int end = start;
+            Comparator<Point> slopeOrder = origin.slopeOrder();
+            for (int i = start; i < others.length; i++) {
+                boolean slopesEqual = (slopeOrder.compare(others[i - 1], others[i]) == 0);
+                boolean originIsStart = (origin.compareTo(others[start]) < 0);
+                if (slopesEqual) {
+                    end++;
+                    if ((i == (others.length - 1)) && ((end - start) >= 2) && originIsStart) {
+                        tempLineSegments.add(new LineSegment(origin, others[others.length - 1]));
                     }
                 } else { // Different slopes
-                    if (lineSegment) {
+                    if (((end - start) >= 2) && originIsStart) {
                         tempLineSegments.add(new LineSegment(origin, others[i - 1]));
                     }
-
                     start = i;
+                    end = i;
                 }
-                i++;
             }
         }
-
         this.lineSegments = tempLineSegments.toArray(new LineSegment[tempLineSegments.size()]);
-    }
-
-    private int hello(Point origin, Point[] others, int i, double currSlope) {
-        double slope = origin.slopeTo(others[i]);
-        int j;
-        if (currSlope == slope) {
-            j = hello(origin, others, ++i, slope);
-        }
-        else {
-            j = i;
-        }
-        return j;
     }
 
     // the number of line segments
