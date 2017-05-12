@@ -55,6 +55,9 @@ public class Point implements Comparable<Point> {
      * Double.POSITIVE_INFINITY if the line segment is vertical;
      * and Double.NEGATIVE_INFINITY if (x0, y0) and (x1, y1) are equal.
      *
+     * Note, it is okay to compare slopes (floating point numbers) since Points
+     * are defined at integer x, y coordinates only.
+     *
      * @param  that the other point
      * @return the slope between this point and the specified point
      */
@@ -63,16 +66,17 @@ public class Point implements Comparable<Point> {
         int delY = (that.y - y);
         double slope;
 
-        if (delY == 0 && delX == 0) {  // Degenerate line
+        if (delY == 0 && delX == 0) {  // Degenerate slope
             slope = Double.NEGATIVE_INFINITY;
         }
-        else if (delY != 0 && delX == 0) { // Vertical line
+        else if (delX == 0) {  // Vertical slope (delY != 0)
             slope = Double.POSITIVE_INFINITY;
         }
-        else if (delY == 0 && delX != 0) { // Horizontal line
+        else if (delY == 0) {  // Horizontal slope (delX != 0)
+            // double type has two representations of 0 (-0 and +0). We need only one.
             slope = +0;
         }
-        else {  // Line with calculable slope
+        else {  // Uniquely calculable slope (delY != 0 && delX != 0)
             slope = (double) delY / (double) delX;
         }
 
@@ -98,21 +102,25 @@ public class Point implements Comparable<Point> {
         else if (y > that.y) {
             return +1;
         }
-        else if (x < that.x) {  // By this stage, we can assume y0==y1
+        else if (x < that.x) {  // y0==y1
             return -1;
         }
-        else if (x > that.x) {  // Assume y0==y1 by
+        else if (x > that.x) {  // y0==y1
             return +1;
         }
         return 0;  // y0==y1 and x0==x1
     }
 
+    /**
+     * Contains method to help compare two points by the slope they make with this point.
+     */
     private class SlopeOrder implements Comparator<Point> {
         @Override
         public int compare(Point p1, Point p2) {
             double s1 = slopeTo(p1);
             double s2 = slopeTo(p2);
 
+            // Comparing floating point numbers here is okay since Points are defined at integer x, y coordinates only.
             if (s1 < s2) {
                 return -1;
             }
@@ -144,12 +152,5 @@ public class Point implements Comparable<Point> {
     public String toString() {
         /* DO NOT MODIFY */
         return "(" + x + ", " + y + ")";
-    }
-
-    /**
-     * Unit tests the Point data type.
-     */
-    public static void main(String[] args) {
-        /* YOUR CODE HERE */
     }
 }

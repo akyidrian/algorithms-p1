@@ -3,6 +3,8 @@ import edu.princeton.cs.algs4.StdDraw;
 import edu.princeton.cs.algs4.StdOut;
 
 /**
+ * Simple client to help test collinear points classes.
+ *
  * @author Aydin
  */
 public class Client {

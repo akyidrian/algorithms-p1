@@ -9,40 +9,61 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 /**
+ * Simple test client for the Point class.
+ *
  * @author Aydin
  */
 public class PointTest {
-    private final int X = 1000;
-    private final int Y = 1000;
-    private final Point POINT = new Point(X, Y);
-    private final int LOWER_BOUND = 0;      //TODO: Inclusive?
-    private final int UPPER_BOUND = 32767;  //TODO: Inclusive?
 
+    // Arbitrarily chosen point in bounds.
+    private static final int X = 1000;
+    private static final int Y = 1000;
+    private static final Point POINT = new Point(X, Y);
+
+    private static final int LOWER_BOUND = 0;      // Inclusive.
+    private static final int UPPER_BOUND = 32767;  // Inclusive.
+
+    /**
+     * Checking compareTo() method.
+     */
     @Test
     void compareToTest() {
-        assertEquals(POINT.compareTo(new Point(X, Y + 1)), -1);  // point above
-        assertEquals(POINT.compareTo(new Point(X, Y - 1)), +1);  // point below
-        assertEquals(POINT.compareTo(new Point(X, Y)), 0);  // point equal
-        assertEquals(POINT.compareTo(new Point(X + 1, Y)), -1);  // point to the right
-        assertEquals(POINT.compareTo(new Point(X - 1, Y)), +1);  // point to the left
+        assertTrue(POINT.compareTo(new Point(X, Y)) == 0);        // new point equal
+        assertTrue(POINT.compareTo(new Point(X + 1, Y)) < 0);  // new point to the right
+        assertTrue(POINT.compareTo(new Point(X - 1, Y)) > 0);  // new point to the left
+        assertTrue(POINT.compareTo(new Point(X, Y + 1)) < 0);  // new point above
+        assertTrue(POINT.compareTo(new Point(X, Y - 1)) > 0);  // new point below
+
+        assertTrue(POINT.compareTo(new Point(X + 1, Y + 1)) < 0);  // new point to the North-East
+        assertTrue(POINT.compareTo(new Point(X - 1, Y - 1)) > 0);  // new point to the South-West
+        assertTrue(POINT.compareTo(new Point(X - 1, Y + 1)) < 0);  // new point to the North-West
+        assertTrue(POINT.compareTo(new Point(X + 1, Y - 1)) > 0);  // new point to the South-East
     }
 
+    /**
+     * Checking slopeTo() method.
+     */
     @Test
     void slopeToTest() {
-        assertEquals(POINT.slopeTo(new Point(X + 1, Y + 1)), 1);
-        assertEquals(POINT.slopeTo(new Point(X - 1, Y - 1)), 1);
-        assertEquals(POINT.slopeTo(new Point(X - 1, Y + 1)), -1);
-        assertEquals(POINT.slopeTo(new Point(X + 1, Y - 1)), -1);
+        assertEquals(POINT.slopeTo(new Point(X, Y)), Double.NEGATIVE_INFINITY);  // Degenerate line
+        assertEquals(POINT.slopeTo(new Point(X + 1, Y)), +0);  // Horizontal line
+        assertEquals(POINT.slopeTo(new Point(X - 1, Y)), +0);  // Horizontal line
+        assertEquals(POINT.slopeTo(new Point(X, Y + 1)), Double.POSITIVE_INFINITY);  // Vertical line
+        assertEquals(POINT.slopeTo(new Point(X, Y - 1)), Double.POSITIVE_INFINITY);  // Vertical line
 
-        assertEquals(POINT.slopeTo(new Point(X + 1, Y)), +0);  // horizontal line segment
-        assertEquals(POINT.slopeTo(new Point(X, Y + 1)), Double.POSITIVE_INFINITY);  // vertical line segment
-        assertEquals(POINT.slopeTo(new Point(X, Y)), Double.NEGATIVE_INFINITY);  // degenerate line segment
+        assertEquals(POINT.slopeTo(new Point(X + 1, Y + 1)), 1);   // North-East line
+        assertEquals(POINT.slopeTo(new Point(X - 1, Y - 1)), 1);   // South-West line
+        assertEquals(POINT.slopeTo(new Point(X - 1, Y + 1)), -1);  // North-West line
+        assertEquals(POINT.slopeTo(new Point(X + 1, Y - 1)), -1);  // South-East line
     }
 
+    /**
+     * Checking compare() method inside Comparator.
+     */
     @Test
     void slopeOrderTest() {
         Comparator<Point> pointComparator = POINT.slopeOrder();
-        int compareResult = 0;
+        int compareResult;
 
         compareResult = pointComparator.compare(new Point(X, Y), new Point(X, Y));
         assertTrue(compareResult == 0);
@@ -50,20 +71,29 @@ public class PointTest {
         compareResult = pointComparator.compare(new Point(X, Y), new Point(X, Y + 1));
         assertTrue(compareResult < 0);
 
+        compareResult = pointComparator.compare(new Point(X, Y), new Point(X, Y - 1));
+        assertTrue(compareResult < 0);
+
         compareResult = pointComparator.compare(new Point(X + 1, Y), new Point(X, Y));
+        assertTrue(compareResult > 0);
+
+        compareResult = pointComparator.compare(new Point(X - 1, Y), new Point(X, Y));
         assertTrue(compareResult > 0);
     }
 
+    /**
+     * Currently disabled. An assumption which is not considered too important.
+     */
     @Disabled
     @Test
-    void intCoordBoundsAssumption() {
+    void coordBoundsAssumption() {
         assertThrows(IllegalArgumentException.class, ()->{
-            new Point(LOWER_BOUND - 1, LOWER_BOUND);
-            new Point(LOWER_BOUND, LOWER_BOUND - 1);
-            new Point(LOWER_BOUND - 1, LOWER_BOUND - 1);
-            new Point(UPPER_BOUND, UPPER_BOUND + 1);
-            new Point(UPPER_BOUND + 1, UPPER_BOUND);
-            new Point(UPPER_BOUND + 1, UPPER_BOUND + 1);
+            new Point(LOWER_BOUND - 1, LOWER_BOUND);  // point left of the lower bound
+            new Point(LOWER_BOUND, LOWER_BOUND - 1);  // point below the lower bound
+            new Point(LOWER_BOUND - 1, LOWER_BOUND - 1);  // point South-West of lower bound
+            new Point(UPPER_BOUND, UPPER_BOUND + 1);  // point above the upper bound
+            new Point(UPPER_BOUND + 1, UPPER_BOUND);  // point right of the upper bound
+            new Point(UPPER_BOUND + 1, UPPER_BOUND + 1);  // point North-East of upper bound
         });
     }
 }
