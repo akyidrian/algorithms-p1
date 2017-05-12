@@ -116,6 +116,7 @@ public class Deque<Item> implements Iterable<Item> {
 
     /**
      * Adds item to the end of the deque.
+     *
      * @param item to add to end.
      */
     public void addLast(Item item) {
@@ -137,6 +138,7 @@ public class Deque<Item> implements Iterable<Item> {
 
     /**
      * Remove and return the item from the front of the deque.
+     *
      * @return item at the front.
      */
     public Item removeFirst() {
@@ -159,6 +161,7 @@ public class Deque<Item> implements Iterable<Item> {
 
     /**
      * Remove and return the item from the end.
+     *
      * @return item from the end.
      */
     public Item removeLast() {
