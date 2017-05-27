@@ -3,9 +3,6 @@ import edu.princeton.cs.algs4.MinPQ;
 import edu.princeton.cs.algs4.Stack;
 import edu.princeton.cs.algs4.StdOut;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
 /**
  * Created by Aydin on 13/05/2017.
  */
@@ -14,11 +11,44 @@ public class Solver {
     private boolean solvable = false;
     private int moves = -1;
 
+    // find a solution to the initial board (using the A* algorithm)
+    public Solver(Board initial) {
+        if (initial == null) {
+            throw new NullPointerException("Null board provided.");
+        }
 
-    private class Node implements Comparable<Node> {
-        final Board board;
-        final int moves;
-        final Node previous;
+        // Initial board
+        MinPQ<Node> nodesPQ = new MinPQ<>();
+        nodesPQ.insert(new Node(initial));
+        Node searchNode = nodesPQ.delMin();
+
+        // Twin board
+        MinPQ<Node> twinNodesPQ = new MinPQ<>();
+        twinNodesPQ.insert(new Node(initial.twin()));
+        Node twinSearchNode = twinNodesPQ.delMin();
+
+        while (!(searchNode.board.isGoal() || twinSearchNode.board.isGoal())) {
+            searchNode = searchStep(nodesPQ, searchNode);
+            twinSearchNode = searchStep(twinNodesPQ, twinSearchNode);
+        }
+
+        if (searchNode.board.isGoal()) {
+            solvable = true;
+            moves = searchNode.moves;
+
+            boards = new Stack<>();
+            while (searchNode.previous != null) {  // Initial node has previous of null
+                boards.push(searchNode.board);
+                searchNode = searchNode.previous;
+            }
+            boards.push(initial);
+        }
+    }
+
+    private static class Node implements Comparable<Node> {
+        private final Board board;
+        private final int moves;
+        private final Node previous;
 
         public Node(Board board) {
             this.board = board;
@@ -33,22 +63,16 @@ public class Solver {
         }
 
         public int priority() {
-            return board.hamming() + moves;  //TODO hamming?
+            return board.manhattan() + moves;
         }
 
         @Override
         public int compareTo(Node o) {
-            if (priority() < o.priority()) {
-                return -1;
-            }
-            else if (priority() > o.priority()) {
-                return +1;
-            }
-            return 0;
+            return this.priority() - o.priority();
         }
     }
 
-    private Node step(MinPQ<Node> nodesPQ, Node searchNode) {
+    private Node searchStep(MinPQ<Node> nodesPQ, Node searchNode) {
         for (Board neighbor : searchNode.board.neighbors()) {
             if ((searchNode.previous != null) && neighbor.equals(searchNode.previous.board)) {
                 continue;
@@ -58,59 +82,14 @@ public class Solver {
         return nodesPQ.delMin();
     }
 
-    // find a solution to the initial board (using the A* algorithm)
-    public Solver(Board initial) {
-        if (initial == null) {
-            throw new NullPointerException("Null board provided.");
-        }
-
-        MinPQ<Node> nodesPQ = new MinPQ<>();
-        nodesPQ.insert(new Node(initial));
-        Node searchNode = nodesPQ.delMin();
-
-        MinPQ<Node> twinNodesPQ = new MinPQ<>();
-        twinNodesPQ.insert(new Node(initial.twin()));
-        Node twinSearchNode = twinNodesPQ.delMin();
-        while (!(searchNode.board.isGoal() || twinSearchNode.board.isGoal())) {
-            searchNode = step(nodesPQ, searchNode);
-            twinSearchNode = step(twinNodesPQ, twinSearchNode);
-        }
-
-        if (searchNode.board.isGoal()) {
-            solvable = true;
-            moves = searchNode.moves;
-
-            boards = new Stack<Board>();
-            while (searchNode.previous != null) {
-                boards.push(searchNode.board);
-                searchNode = searchNode.previous;
-            }
-            boards.push(initial);
-        }
-    }
-
     // is the initial board solvable?
-    public boolean isSolvable() {
-        return solvable;
-    }
+    public boolean isSolvable() { return solvable; }
 
     // min number of moves to solve initial board; -1 if unsolvable
     public int moves() { return moves; }
 
-    private class NodesIterable implements Iterable<Board> {
-        @Override
-        public Iterator<Board> iterator() {
-            return boards.iterator();
-        }
-    }
-
     // sequence of boards in a shortest solution; null if unsolvable
-    public Iterable<Board> solution() {
-        if (boards == null) {
-            return null;
-        }
-        return new NodesIterable(); //TODO
-    }
+    public Iterable<Board> solution() { return boards; }
 
     public static void main(String[] args) {
         // create initial board from file
