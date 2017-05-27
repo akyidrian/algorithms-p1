@@ -160,7 +160,7 @@ public class Board {
         return true;
     }
 
-    // TODO: may be able to optimize by reducing manhattan .
+    // TODO: may be able to optimize by choosing swap that reduces manhattan distance.
     // a board that is obtained by exchanging any pair of blocks
     public Board twin() {
         int dim = dimension();
@@ -174,13 +174,14 @@ public class Board {
             randJ = StdRandom.uniform(dim);
             Direction dir = Direction.getDirection(StdRandom.uniform(4));
             neighbor = getNeighbor(randI, randJ, dir);
-        } while (!inBounds(neighbor[0], neighbor[1]) || blocks[randI][randJ] == 0 || blocks[neighbor[0]][neighbor[1]] == 0);
+        } while (!inBounds(neighbor[0], neighbor[1]) || (blocks[randI][randJ] == 0) || (blocks[neighbor[0]][neighbor[1]] == 0));
 
         swapBlocks(twin, randI, randJ, neighbor[0], neighbor[1]);
 
         return new Board(twin);
     }
 
+    // TODO BLOCK CAST
     // does this board equal y?
     public boolean equals(Object y) {
         if (y == null) {
@@ -236,7 +237,7 @@ public class Board {
                         if(blocks[i][j] == 0) {
                             blankBlockI = i;
                             blankBlockJ = j;
-                            break;
+                            break;  //TODO
                         }
                     }
                 }
@@ -266,7 +267,7 @@ public class Board {
                 }
 
                 Board neighbor = neighbors[current];
-                current++;
+                current++; //TODO
                 return neighbor;
             }
 
