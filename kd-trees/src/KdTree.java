@@ -5,45 +5,76 @@ import edu.princeton.cs.algs4.StdDraw;
 import java.util.ArrayList;
 
 /**
- * Created by Aydin on 27/05/2017.
+ * A mutable data type that uses a 2d-tree to represent a set of points inside a unit square. The unit square has
+ * vertices at (0,0), (0,1), (1,0) and (1,1).
+ *
+ * This API supports operation:
+ * - nearest() in time proportional to log(N) in the typical case or N in the worst-case (even if tree is balanced).
+ * - range() in time proportional R + log(N) in the typical case or R + Math.sqrt(N) in the worst case (assuming the
+ *   tree is balanced). Note, R is number of points that match.
+ *
+ * @author Aydin
  */
 public class KdTree {
-    private Node root;
-    private int size;
+    private Node root;  // Root node of the 2d-tree, which is considered to be at depth 0.
+    private int size;   // Number of nodes in the 2d-tree.
 
-    // construct an empty set of points
+    /**
+     * Initialise KdTree object.
+     */
     public KdTree() {
         root = null;
         size = 0;
     }
 
-    // is the set empty?
+    /**
+     * Is there zero points in the tree?
+     *
+     * @return true if zero points, false if there do exist points.
+     */
     public boolean isEmpty() {
         return (size == 0);
     }
 
-    // number of points in the set
+    /**
+     * Number of points in the tree.
+     *
+     * @return total number of points.
+     */
     public int size() {
         return size;
     }
 
-    // add the point to the set (if it is not already in the set)
+    /**
+     * Add the point p to the tree (if it is not already in the tree).
+     *
+     * @param p point to add.
+     */
     public void insert(Point2D p) {
-        if (p == null) {
-            throw new NullPointerException();
-        }
+        if (p == null) { throw new NullPointerException(); }
+        else if (!inBounds(p)) { throw new IllegalArgumentException("Point must be inside the unit square."); }
         root = insert(null, root, p, 0);
     }
 
-    // does the set contain point p?
+    /**
+     * Does the tree have a point p?
+     *
+     * @param p point to check for in the tree.
+     * @return true if p is in the tree, false otherwise.
+     */
     public boolean contains(Point2D p) {
-        if (p == null) {
-            throw new NullPointerException();
-        }
+        if (p == null) { throw new NullPointerException(); }
+        else if (!inBounds(p)) { throw new IllegalArgumentException("Point must be inside the unit square."); }
         return contains(root, p, 0);
     }
 
-    // a nearest neighbor in the set to point p; null if the set is empty
+    /**
+     * Find the closest point to the query point p. Query point p can be outside the unit square.
+     * Null is returned if the set is empty.
+     *
+     * @param p query point.
+     * @return closest point to query point p.
+     */
     public Point2D nearest(Point2D p) {
         if (p == null) {
             throw new NullPointerException();
@@ -51,7 +82,12 @@ public class KdTree {
         return nearest(root, p, null, 0);
     }
 
-    // all points that are inside the rectangle
+    /**
+     * Find all points contained inside the query rectangle. Query rectangle can be outside the unit square.
+     *
+     * @param rect query rectangle.
+     * @return iterable of points inside the query rectangle.
+     */
     public Iterable<Point2D> range(RectHV rect) {
         if (rect == null) {
             throw new NullPointerException();
@@ -61,62 +97,114 @@ public class KdTree {
         return points;
     }
 
-    // draw all points to standard draw
+    /**
+     * Draw all points in the set to standard draw.
+     */
     public void draw() {
         draw(root, 0);
     }
 
+    /**
+     * Does this depth in the tree correspond to a vertical split? Depth is always >= 0.
+     *
+     * @param depth in the tree.
+     * @return true if this depth relates to a vertical split, otherwise false.
+     */
+    private boolean isVertical(int depth) {
+        return (depth % 2 == 0);
+    }
+
+    /**
+     * Does this depth in the tree correspond to a horizontal split? Depth is always >= 0.
+     *
+     * @param depth in the tree.
+     * @return true if this depth relates to a horizontal split, otherwise false.
+     */
+    private boolean isHorizontal(int depth) {
+        return (depth % 2 == 1);
+    }
+
+    /**
+     * Is point p inside the unit square defined with vertices at (0,0), (0,1), (1,0) and (1,1)? Point p can be on the
+     * perimeter of the unit square.
+     *
+     * @param p point to check.
+     * @return true if inside unit square, false otherwise.
+     */
+    private boolean inBounds(Point2D p) {
+        return ((p.x() >= 0.0) && (p.x() <= 1.0) && (p.y() >= 0.0) && (p.y() <= 1.0));
+    }
+
+    /**
+     * Node class to be used in the tree.
+     */
     private static class Node {
         private final Point2D p;      // the point
         private final RectHV rect;    // the axis-aligned rectangle corresponding to this node
-        private Node lb;        // the left/bottom subtree
-        private Node rt;        // the right/top subtree
+        private Node lb;              // the left/bottom subtree
+        private Node rt;              // the right/top subtree
 
+        /**
+         * Node must be instantiated with at least a point and rectangle. lb and rt are usually specified as the tree
+         * grows.
+         *
+         * @param p point to be held by the node.
+         * @param rect rectangle corresponding to new node.
+         */
         public Node(Point2D p, RectHV rect) {
             this.p = p;
             this.rect = rect;
             this.lb = null;
             this.rt = null;
         }
-
-        public Node(Point2D p, RectHV rect, Node lb, Node rt) {
-            this.p = p;
-            this.rect = rect;
-            this.lb = lb;
-            this.rt = rt;
-        }
     }
 
-    private RectHV createRectForNewNode(Node prev, Point2D p, int depth) {
+    /**
+     * Create a rectangle for point p/new child node that is to be inserted into the tree.
+     *
+     * @param parent node to insert onto.
+     * @param p point to be inserted.
+     * @param depth depth in the tree of the supposed new child node.
+     * @return rectangle corresponding to point p/new child node.
+     */
+    private RectHV createRectForNewNode(Node parent, Point2D p, int depth) {
         int cmp;
-        RectHV rect = new RectHV(0.0, 0.0, 1.0, 1.0);
-        if (prev != null) {
-            if (depth % 2 == 0) {  // Current is vertical, parent is horizontal
-                cmp = Double.compare(p.y(), prev.p.y());
+        RectHV rect = new RectHV(0.0, 0.0, 1.0, 1.0); // Default unit square node for root node.
+        if (parent != null) {
+            if (isVertical(depth)) {  // new child node will be vertically split, so parent must be horizontally split
+                cmp = Double.compare(p.y(), parent.p.y());
 
                 if (cmp < 0) {
-                    rect = new RectHV(prev.rect.xmin(), prev.rect.ymin(), prev.rect.xmax(), prev.p.y());
+                    rect = new RectHV(parent.rect.xmin(), parent.rect.ymin(), parent.rect.xmax(), parent.p.y());
                 } else if (cmp > 0) {
-                    rect = new RectHV(prev.rect.xmin(), prev.p.y(), prev.rect.xmax(), prev.rect.ymax());
+                    rect = new RectHV(parent.rect.xmin(), parent.p.y(), parent.rect.xmax(), parent.rect.ymax());
                 }
-            } else {  // Horizontal
-                cmp = Double.compare(p.x(), prev.p.x());
+            } else {  // new child node will be horizontally split, so parent must be vertically split
+                cmp = Double.compare(p.x(), parent.p.x());
 
-                if (cmp < 0) {  // Current is horizontal, parent is vertical
-                    rect = new RectHV(prev.rect.xmin(), prev.rect.ymin(), prev.p.x(), prev.rect.ymax());
+                if (cmp < 0) {
+                    rect = new RectHV(parent.rect.xmin(), parent.rect.ymin(), parent.p.x(), parent.rect.ymax());
                 } else if (cmp > 0) {
-                    rect = new RectHV(prev.p.x(), prev.rect.ymin(), prev.rect.xmax(), prev.rect.ymax());
+                    rect = new RectHV(parent.p.x(), parent.rect.ymin(), parent.rect.xmax(), parent.rect.ymax());
                 }
             }
         }
-
         return rect;
     }
 
-    private Node insert(Node prev, Node n, Point2D p, int depth) {
+    /**
+     * A recursive helper method to add the point p to the tree.
+     *
+     * @param parent node to node n.
+     * @param n current node.
+     * @param p point to add.
+     * @param depth of node n in the tree.
+     * @return Node.
+     */
+    private Node insert(Node parent, Node n, Point2D p, int depth) {
         if (n == null) {
             size++;
-            return new Node(p, createRectForNewNode(prev, p, depth));
+            return new Node(p, createRectForNewNode(parent, p, depth));
         }
 
         int cmpX = Double.compare(p.x(), n.p.x());
@@ -124,9 +212,9 @@ public class KdTree {
         if ((cmpX == 0) && (cmpY == 0)) { return n; }
 
         int cmp;
-        if (depth % 2 == 0) {  // Vertical
+        if (isVertical(depth)) {
             cmp = cmpX;
-        } else {  // Horizontal
+        } else {  // n is a horizontal splitting node
             cmp = cmpY;
         }
 
@@ -139,17 +227,24 @@ public class KdTree {
         return n;
     }
 
+    /**
+     * A recursive helper method to check if the tree has a point p.
+     *
+     * @param n current node.
+     * @param p point to check for in the tree.
+     * @return true if p is in the tree, false otherwise.
+     */
     private boolean contains(Node n, Point2D p, int depth) {
-        if (n == null) { return false; }
+        if (n == null) { return false; }  // Haven't found the point.
 
         int cmpX = Double.compare(p.x(), n.p.x());
         int cmpY = Double.compare(p.y(), n.p.y());
-        if ((cmpX == 0) && (cmpY == 0)) { return true; }
+        if ((cmpX == 0) && (cmpY == 0)) { return true; }  // Found the point.
 
         int cmp;
-        if (depth % 2 == 0) {  // Vertical
+        if (isVertical(depth)) {
             cmp = cmpX;
-        } else {  // Horizontal
+        } else {  // n is a horizontal splitting node
             cmp = cmpY;
         }
 
@@ -160,7 +255,13 @@ public class KdTree {
         }
     }
 
-    // Post Order traversal?
+    /**
+     * A recursive helper method to draw all points in the set to standard draw. A splitting line is also displayed for
+     * every point.
+     *
+     * @param n current node.
+     * @param depth of current node n in the tree.
+     */
     private void draw(Node n, int depth) {
         if (n == null) { return; }
 
@@ -170,7 +271,7 @@ public class KdTree {
         StdDraw.setPenColor(StdDraw.BLACK);
         StdDraw.setPenRadius(0.01);
         n.p.draw();
-        if (depth % 2 == 0) {
+        if (isVertical(depth)) {
             StdDraw.setPenColor(StdDraw.RED);
             StdDraw.setPenRadius();
             StdDraw.line(n.p.x(), n.rect.ymin(), n.p.x(), n.rect.ymax());
@@ -181,6 +282,18 @@ public class KdTree {
         }
     }
 
+    /**
+     * A recursive helper method to find all points contained inside the query rectangle. Query rectangle can be outside
+     * the unit square.
+     *
+     * Method:
+     * If the query rectangle does not intersect the rectangle corresponding to a node, there is no need to explore that
+     * node (or its subtrees). A subtree is searched only if it might contain a point contained in the query rectangle.
+     *
+     * @param n current node.
+     * @param query rectangle.
+     * @param points inside the query rectangle.
+     */
     private void range(Node n, RectHV query, ArrayList<Point2D> points) {
         if (n == null || !query.intersects(n.rect)) { return; }
         if (query.contains(n.p)) { points.add(n.p); }
@@ -188,14 +301,31 @@ public class KdTree {
         range(n.rt, query, points);
     }
 
+    /**
+     * A recursive helper method to find the nearest point to the query point p. Query point p can be outside the unit
+     * square.
+     *
+     * Method:
+     * 1. Choose the subtree that is on the same side of the splitting line as the query point. This should
+     *    prune out most other candidate subtrees needed to be explored.
+     * 2. Check out other points that may be closer. If the closest point discovered in 1 so far is closer than the
+     *    distance between the query point and the rectangle corresponding to a node, there is no need to explore that
+     *    node (or its subtrees).
+     *
+     * @param n current node.
+     * @param query point.
+     * @param nearest current nearest found point to query point.
+     * @param depth current depth of node n in the tree.
+     * @return current nearest point to query point.
+     */
     private Point2D nearest(Node n, Point2D query, Point2D nearest, int depth) {
         if (n == null) { return nearest; }
         if (nearest == null || (query.distanceSquaredTo(n.p) < query.distanceSquaredTo(nearest))) { nearest = n.p; }
 
         int cmp;
-        if (depth % 2 == 0) {  // Vertical
+        if (isVertical(depth)) {
             cmp = Double.compare(query.x(), n.p.x());
-        } else {  // Horizontal
+        } else {  // n is a horizontal splitting node
             cmp = Double.compare(query.y(), n.p.y());
         }
 
