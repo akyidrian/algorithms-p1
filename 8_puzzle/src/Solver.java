@@ -4,14 +4,26 @@ import edu.princeton.cs.algs4.Stack;
 import edu.princeton.cs.algs4.StdOut;
 
 /**
- * Created by Aydin on 13/05/2017.
+ * Immutable data type that uses the A* algorithm to solve an 8-puzzle problem (or it's natural generalisations).
+ *
+ * Potential optimizations:
+ * - Exploit the fact that the difference in Manhattan distance between a board and a neighbor is either −1 or +1.
+ * - Use only one PQ to run the A* algorithm on the initial board and its twin.
+ * - When two search nodes have the same Manhattan priority, you can break ties however you want, e.g., by comparing
+ *   either the Hamming or Manhattan distances of the two boards.
+ *
+ * @author Aydin
  */
 public class Solver {
     private Stack<Board> boards = null;
     private boolean solvable = false;
     private int moves = -1;
 
-    // find a solution to the initial board (using the A* algorithm)
+    /**
+     * Find a solution to the initial board using the A* algorithm.
+     *
+     * @param initial problem board to solve.
+     */
     public Solver(Board initial) {
         if (initial == null) {
             throw new NullPointerException("Null board provided.");
@@ -27,11 +39,13 @@ public class Solver {
         twinNodesPQ.insert(new Node(initial.twin()));
         Node twinSearchNode = twinNodesPQ.delMin();
 
+        // Keep searching for goal board in synchronized way with initial and twin boards.
         while (!(searchNode.board.isGoal() || twinSearchNode.board.isGoal())) {
             searchNode = searchStep(nodesPQ, searchNode);
             twinSearchNode = searchStep(twinNodesPQ, twinSearchNode);
         }
 
+        // Set the member variable.
         if (searchNode.board.isGoal()) {
             solvable = true;
             moves = searchNode.moves;
@@ -45,10 +59,34 @@ public class Solver {
         }
     }
 
+    /**
+     * Is the initial board solvable?
+     *
+     * @return true if solvable, false otherwise.
+     */
+    public boolean isSolvable() { return solvable; }
+
+    /**
+     * Minimum number of moves to solve initial board.
+     *
+     * @return minimum number of moves to solve. If unsolvable, -1 is given.
+     */
+    public int moves() { return moves; }
+
+    /**
+     * Shortest sequence of boards steps to the solution.
+     *
+     * @return iterable of the sequence of board steps. If unsolvable, null is given.
+     */
+    public Iterable<Board> solution() { return boards; }
+
+    /**
+     * Node class to be used in the MinPQ.
+     */
     private static class Node implements Comparable<Node> {
-        private final Board board;
-        private final int moves;
-        private final Node previous;
+        private final Board board;    // the board.
+        private final int moves;      // number of moves made.
+        private final Node previous;  // previous node.
 
         public Node(Board board) {
             this.board = board;
@@ -62,35 +100,51 @@ public class Solver {
             this.previous = previous;
         }
 
+        /**
+         * Priority value.
+         *
+         * @return pritority value.
+         */
         public int priority() {
             return board.manhattan() + moves;
         }
 
-        @Override
+        /**
+         * Compare priority values.
+         *
+         * @param o node to compare to.
+         * @return priority difference between this and o.
+         */
         public int compareTo(Node o) {
             return this.priority() - o.priority();
         }
     }
 
+    /**
+     * Step of A* algorithm:
+     * 1. Insert neighbors of the searchNode. Ignore previous board to searchNode.
+     * 2. Delete and returns lowest priority node in the MinPQ.
+     *
+     * @param nodesPQ MinPQ filled with boards.
+     * @param searchNode node to find neighbors for and insert into MinPQ.
+     * @return Node with the lowest priority in the MinPQ.
+     */
     private Node searchStep(MinPQ<Node> nodesPQ, Node searchNode) {
         for (Board neighbor : searchNode.board.neighbors()) {
+            // Ignore the neighboring board that we've already added to MinPQ previously.
             if ((searchNode.previous != null) && neighbor.equals(searchNode.previous.board)) {
                 continue;
             }
             nodesPQ.insert(new Node(neighbor, searchNode.moves + 1, searchNode));
         }
-        return nodesPQ.delMin();
+        return nodesPQ.delMin();  // Next lowest priority node in MinPQ.
     }
 
-    // is the initial board solvable?
-    public boolean isSolvable() { return solvable; }
-
-    // min number of moves to solve initial board; -1 if unsolvable
-    public int moves() { return moves; }
-
-    // sequence of boards in a shortest solution; null if unsolvable
-    public Iterable<Board> solution() { return boards; }
-
+    /**
+     * Simple test client.
+     *
+     * @param args file containing puzzle problem.
+     */
     public static void main(String[] args) {
         // create initial board from file
         In in = new In(args[0]);
