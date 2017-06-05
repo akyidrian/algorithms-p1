@@ -137,6 +137,9 @@ public class KdTree {
 
     /**
      * Node class to be used in the tree.
+     *
+     * Potential Memory Saving Optimization:
+     * Don't need to explicitly store a RectHV in each 2d-tree node.
      */
     private static class Node {
         private final Point2D p;      // the point
@@ -289,6 +292,12 @@ public class KdTree {
      * Method:
      * If the query rectangle does not intersect the rectangle corresponding to a node, there is no need to explore that
      * node (or its subtrees). A subtree is searched only if it might contain a point contained in the query rectangle.
+     *
+     * Potential Future Optimization:
+     * Instead of checking whether the query rectangle intersects the rectangle corresponding to a node, it suffices to
+     * check only whether the query rectangle intersects the splitting line segment: if it does, then recursively search
+     * both subtrees; otherwise, recursively search the one subtree where points intersecting the query rectangle could
+     * be.
      *
      * @param n current node.
      * @param query rectangle.
